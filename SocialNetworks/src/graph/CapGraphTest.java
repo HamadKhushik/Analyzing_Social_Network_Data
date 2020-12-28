@@ -9,6 +9,8 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import util.GraphLoader;
+
 /**
  * @author Hammad
  *
@@ -21,16 +23,22 @@ public class CapGraphTest {
 	
 	CapGraph empty;
 	CapGraph test;
+	CapGraph egoTest;
+	Graph result;
 	
 	@Before
 	public void setUp() throws Exception {
 		
 		empty = new CapGraph();
 		test = new CapGraph();
+		egoTest = new CapGraph();
 		test.addVertex(32);
 		test.addVertex(50);
 		test.addVertex(44);
 		test.addVertex(32);
+		
+		GraphLoader.loadGraph(egoTest, "data/egoNetTest.txt");
+		result = egoTest.getEgonet(50);
 		
 		test.addEdge(32, 50);
 		test.addEdge(50, 32);
@@ -70,7 +78,10 @@ public class CapGraphTest {
 	 */
 	@Test
 	public void testGetEgonet() {
-		fail("Not yet implemented");
+		
+		assertEquals("Total number of vertices for egoNet 50", 4, (((CapGraph) result).getNumOfVertices()));
+		assertEquals("Total number of edges for egoNet 50", 8, ((CapGraph)result).getNumOfEdges());
+		assertEquals("is vertex 18 part of egoNet 50", false, ((CapGraph) result).getVertices().contains(18));
 	}
 
 	/**

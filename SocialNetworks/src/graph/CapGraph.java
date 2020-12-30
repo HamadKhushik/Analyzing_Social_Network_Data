@@ -4,8 +4,6 @@
 package graph;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-//import java.util.ArrayList;
 import java.util.HashMap;
 
 import java.util.HashSet;
@@ -43,8 +41,8 @@ public class CapGraph implements Graph {
 	public void addVertex(int num) {
 		// TODO Auto-generated method stub
 		
+		// if vertex already exists
 		if (map.containsKey(num)) {
-			System.out.println("The map already contains the vertex: " + num);
 			return;
 		}
 		
@@ -62,11 +60,9 @@ public class CapGraph implements Graph {
 		
 		HashSet<Integer> neighbours = map.get(from);
 		if (neighbours.contains(to)) {
-			System.out.println("This edge: " + from +" - " + to + " already exists");
 			return;
 		}
 		if (!map.containsKey(to)) {
-			System.out.println("Vertex: " + to + " does not exist");
 			return;
 		}
 		
@@ -100,9 +96,9 @@ public class CapGraph implements Graph {
 	}
 	
 	/**
-	 * Helper function for getEgonet to initialize the graph with center and its neighbours
-	 * @param neighbours - neighbours for vertex 'center'
-	 * @param center - vertex 'Center'
+	 * Helper function for getEgonet to initialize the graph with given vertex and its neighbours
+	 * @param neighbours - neighbours for given vertex
+	 * @param center - given vertex 'Center'
 	 * @return returns a graph object initialized with center and its neighbours
 	 */
 	private Graph initEgoGraph(int center, HashSet<Integer> neighbours) {
@@ -112,8 +108,9 @@ public class CapGraph implements Graph {
 		
 		for (int i : neighbours) {
 			result.addVertex(i);
-			result.addEdge(center, i);
+			
 			// add edges in both directions
+			result.addEdge(center, i);
 			result.addEdge(i, center);
 		}
 		return result;
@@ -126,85 +123,86 @@ public class CapGraph implements Graph {
 	public List<Graph> getSCCs() {
 		// TODO Auto-generated method stub
 		
+		if (this.exportGraph().isEmpty()) {
+			return null;
+		}
+		
 		List<Graph> scc = new ArrayList<Graph>();
 		
 		// first iteration of dfs
 		Stack<Integer> vertices = new Stack<Integer>();
 		vertices.addAll(map.keySet());
-		Stack<Integer> dfs1 = dfs(null, vertices);
-		System.out.println("Stack after dfs iteration " + dfs1);
+		// perform first iteration of dfs, list not required- so passed as null
+		Stack<Integer> finished1 = dfs(this, vertices, null);
 		
 		// transpose of graph
 		Graph tr = transpose();
 		
-		// second iteration of dfs
-		vertices.clear();
-		vertices.addAll(((CapGraph) tr).getVertices());
-		dfs(scc, vertices);
-		
-		
+		// second iteration of dfs, with list passed in to be populated
+		dfs(tr, finished1, scc);
 		
 		return scc;
 	}
 	
+	
 	/**
-	 * @param g graph
-	 * @return list of graphs which are strongly connected components
+	 * @param g -> graph object to be explored
+	 * @param vertices -> stack of vertices to be explored in the graph
+	 * @param list -> list of scc(Strongly connected components) to be populated by the method
+	 * @return stack of vertices in the order algorithm finished visiting them, only required in the first iteration of dfs
 	 */
-	private Stack<Integer> dfs (List<Graph> g, Stack<Integer> vertices){
+	private Stack<Integer> dfs (Graph g, Stack<Integer> vertices, List<Graph> list){
 		
+		// initialization
 		HashSet<Integer> visited = new HashSet<Integer>();
 		Stack<Integer> finished = new Stack<Integer>();
 		
 		while (!vertices.empty()) {
 			int v = vertices.pop();
-			System.out.println("dfs - pop " + v);
 			if (!visited.contains(v)) {
-				if (g != null) {
+				
+				// if second iteration of dfs, pass in subGraph to be populated
+				if (list != null) {
 					Graph subGraph = new CapGraph();
-					dfsVisit(subGraph, v, visited, finished);
+					dfsVisit(g, v, visited, finished, subGraph);
+					list.add(subGraph);
 				}
+				// if first iteration of dfs, subGraph not required
 				else {
-					dfsVisit(null, v, visited, finished);
+					dfsVisit(g, v, visited, finished, null);
 				}
 			}
 		}
-
 		return finished;
 	}
 	
-	private Graph dfsVisit(Graph g, int v, HashSet<Integer> visited, Stack<Integer> finished){
+	/**
+	 * called from dfs() method. it explores all the neighbours of current vertex in the graph
+	 * and populates a graph(subGraph) with the strongly connected components 
+	 * @param g -> graph object to be explored
+	 * @param currVertex -> current vertex to be explored
+	 * @param visited -> set of visited nodes/vertices
+	 * @param finished -> stack of completely visited nodes in the order they were finished, populated for the dfs() method. used in first iteration of dfs
+	 * @param subGraph -> graph of strongly connected components, populated for the dfs() method. used in second iteration of dfs
+	 */
+	private void dfsVisit(Graph g, int currVertex, HashSet<Integer> visited, Stack<Integer> finished, Graph subGraph){
 		
-		visited.add(v);
-		for (int i : getNeighbours(v)){
+		visited.add(currVertex);
+		for (int i : ((CapGraph) g).getNeighbours(currVertex)){
 			if (!visited.contains(i)) {
-				dfsVisit(g, i, visited, finished);
+				dfsVisit(g, i, visited, finished, subGraph);
 			}
 		}
-		finished.push(v);
-		System.out.println("dfs - visit push " + v);
-		if (g != null) {
-			g.addVertex(v);
+		finished.push(currVertex);
+		
+		// if second iteration of dfs, populate the graph with strongly connected components
+		if (subGraph != null) {
+			subGraph.addVertex(currVertex);
 		}
-		return g;
 	}
 	
-	/*
-	 * private HashMap<Integer, HashSet<Integer>> transpose(HashMap<Integer,
-	 * HashSet<Integer>> graph){
-	 * 
-	 * HashMap<Integer, HashSet<Integer>> tr = new HashMap<Integer,
-	 * HashSet<Integer>>(); //Graph tr = new CapGraph();
-	 * 
-	 * for (int i : graph.keySet()) { for (int j : map.get(i)) { if
-	 * (tr.containsKey(j)) { HashSet<Integer> currNeighbours = tr.get(j);
-	 * currNeighbours.add(i); tr.put(j, currNeighbours); } else { tr.put(j, new
-	 * HashSet<Integer>(Arrays.asList(i))); } } }
-	 * System.out.println("Transpose of Graph: " + tr); return tr; }
-	 */
-	
 	/**
-	 * @param graph overloaded method to return the transpose of graph
+	 * @param method to transpose a graph, called from getScc() method
 	 * @return
 	 */
 	private Graph transpose () {
@@ -222,7 +220,6 @@ public class CapGraph implements Graph {
 				}
 			}
 		}
-		System.out.println("Overloaded transpose: " + tr.exportGraph());
 		return tr;
 	}
 
@@ -287,7 +284,7 @@ public class CapGraph implements Graph {
 		// test dfs
 		Stack<Integer> vertices = new Stack<Integer>();
 		vertices.addAll(testTr.exportGraph().keySet());
-		System.out.println("\r\n dfs first iteration: " + testTr.dfs(null, vertices));
+		//System.out.println("\r\n dfs first iteration: " + testTr.dfs(null, vertices));
 		
 		// test SCC
 		List<Graph> scc= new ArrayList<Graph>();
@@ -295,17 +292,7 @@ public class CapGraph implements Graph {
 		GraphLoader.loadGraph(testScc, "data/sccTestFile.txt");
 		scc = testScc.getSCCs();
 		for (int i = 0; i < scc.size(); i++){
-			System.out.println(scc.get(i));
-		}
-		
-		
-		// test stack
-		HashSet<Integer> test1 = new HashSet<Integer>(Arrays.asList(1,2,3,4));
-		Stack<Integer> test = new Stack<Integer>();
-		test.addAll(test1);
-		System.out.println(test);
-		for (int i = 0; i < 4; i++) {
-			System.out.println(test.pop());
+			System.out.println("Scc" + scc.get(i));
 		}
 	}
 

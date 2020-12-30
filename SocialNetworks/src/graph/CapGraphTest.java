@@ -24,7 +24,9 @@ public class CapGraphTest {
 	CapGraph empty;
 	CapGraph test;
 	CapGraph egoTest;
+	CapGraph sccTest;
 	Graph result;
+	List<Graph> sccResult;
 	
 	@Before
 	public void setUp() throws Exception {
@@ -32,6 +34,7 @@ public class CapGraphTest {
 		empty = new CapGraph();
 		test = new CapGraph();
 		egoTest = new CapGraph();
+		sccTest = new CapGraph();
 		test.addVertex(32);
 		test.addVertex(50);
 		test.addVertex(44);
@@ -39,6 +42,9 @@ public class CapGraphTest {
 		
 		GraphLoader.loadGraph(egoTest, "data/egoNetTest.txt");
 		result = egoTest.getEgonet(50);
+		
+		GraphLoader.loadGraph(sccTest, "data/sccTestFile.txt");
+		sccResult = sccTest.getSCCs();
 		
 		test.addEdge(32, 50);
 		test.addEdge(50, 32);
@@ -89,7 +95,8 @@ public class CapGraphTest {
 	 */
 	@Test
 	public void testGetSCCs() {
-		fail("Not yet implemented");
+		assertEquals("Total number of strongly connected components ", 4, sccResult.size());
+		assertEquals("Empty graph", null, empty.getSCCs());
 	}
 
 }

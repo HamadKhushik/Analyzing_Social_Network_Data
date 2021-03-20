@@ -117,7 +117,7 @@ public class CapGraph implements Graph {
 	}
 
 	/* (non-Javadoc)
-	 * @see graph.Graph#getSCCs()
+	 * @see graph.Graph#getSCCs() returns strongly connected components
 	 */
 	@Override
 	public List<Graph> getSCCs() {
@@ -205,7 +205,7 @@ public class CapGraph implements Graph {
 	 * @param method to transpose a graph, called from getScc() method
 	 * @return
 	 */
-	private Graph transpose () {
+	protected Graph transpose () {
 		
 		Graph tr = new CapGraph();
 		for (int i : exportGraph().keySet()) {

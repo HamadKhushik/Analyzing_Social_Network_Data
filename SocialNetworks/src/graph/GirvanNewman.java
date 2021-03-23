@@ -1,6 +1,7 @@
 package graph;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,6 +17,7 @@ public class GirvanNewman extends CapGraph{
 
 	//private HashMap<Integer, HashSet<Integer>> girvanMap; 
 	private HashMap<GirvanNode, HashSet<GirvanNode>> girvanMap; 
+	private HashMap<GirvanNode, Integer> arrayId;  // parallel map to keep track of nodeIndex in adjacency matrix for modularization 
 	private int girvanNumVertices;  	// total number of vertices in graph
 	private int girvanNumEdges;		// total number of edges in graph
 	private HashMap<String, GirvanEdge> edges;	// edges in the graph. id is 'source -> destination'
@@ -27,6 +29,7 @@ public class GirvanNewman extends CapGraph{
 
 		girvanMap = new HashMap<GirvanNode, HashSet<GirvanNode>>();
 		edges = new HashMap<String, GirvanEdge>();
+		arrayId = new HashMap<GirvanNode, Integer>();
 	}
 
 	@Override
@@ -407,10 +410,50 @@ public class GirvanNewman extends CapGraph{
 		return iCommunity;
 	}
 	
+	/**
+	 * assign arrayIds for every node in the graph for the Adjacency matrix
+	 * dataset dont always start from '0', so we have to assign ids for the graph nodes to be compatible
+	 */
+	private void assignArrayIds() {
+		
+		int id = 0;
+		for (GirvanNode curr : this.getGirvanVertices()) {
+			arrayId.put(curr, id++);
+		}
+	}
+	
+	/**calculates the Modularity matrix and returns it
+	 *  
+	 * 
+	 * @return returns the modularity matrix
+	 */
+	private int[][] getModularityMartix() {
+		
+		return null;
+	}
+	
+	private int[][] getAdjacencyMatrix(){
+		
+		// create a n x n adjacency matrix
+		int[][] adjacencyMatrix = new int[this.getGirvanNumVertices()][this.getGirvanNumVertices()];
+		
+		for (GirvanNode i : this.getGirvanVertices()) {
+			
+			for (GirvanNode w : this.getGirvanNeighbours(i)) {
+				
+				adjacencyMatrix[arrayId.get(i)][arrayId.get(w)] = 1;
+			}
+		}
+		return adjacencyMatrix;
+	}
+	
+	private int[][] getProbabilityMatrix() {
+		
+		return null;
+	}
 	//****************************************************************
 	
  	public class GirvanNode{
-		
 		
  		private String vertexId;
 		private double distance;
@@ -696,10 +739,22 @@ public class GirvanNewman extends CapGraph{
 		//System.out.println(between);
 		
 		// test find communities
-		List<Graph> communities = girvan2.findCommunities(4);
-		for (int i = 0; i < communities.size(); i++) {
-			System.out.println(((GirvanNewman) communities.get(i)).getGirvanVertices());
-		}
+//		List<Graph> communities = girvan2.findCommunities(4);
+//		for (int i = 0; i < communities.size(); i++) {
+//			System.out.println(((GirvanNewman) communities.get(i)).getGirvanVertices());
+//		}
+		
+		// test arrayId and AdjacencyMatrix
+		girvan2.assignArrayIds();
+		int[][] matrix = girvan2.getAdjacencyMatrix();
+		System.out.println("-----------------------------------------------------------");
+		System.out.println(Arrays.deepToString(matrix));
+
+		System.out.println("Array Ids: ");
+		System.out.println(girvan2.arrayId);
+		
+
+		
 		 
 	}
 }

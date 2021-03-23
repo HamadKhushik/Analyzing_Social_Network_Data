@@ -18,7 +18,7 @@ public class GirvanNewman extends CapGraph{
 	private HashMap<GirvanNode, HashSet<GirvanNode>> girvanMap; 
 	private int girvanNumVertices;  	// total number of vertices in graph
 	private int girvanNumEdges;		// total number of edges in graph
-	private HashMap<String, GirvanEdge> edges;
+	private HashMap<String, GirvanEdge> edges;	// edges in the graph. id is 'source -> destination'
 
 	private static final int INFINITY = (int) Double.POSITIVE_INFINITY;
 
@@ -146,26 +146,15 @@ public class GirvanNewman extends CapGraph{
 		// Initialization
 		Queue<GirvanNode> queue = new LinkedList<GirvanNode>();
 		Stack<GirvanNode> stack = new Stack<GirvanNode>();
-//		double[] dist = new double[this.getNumOfVertices()];
-//		List<ArrayList<Integer>> pred = new ArrayList<ArrayList<Integer>>();
-//		int[] numShortestPaths = new int[this.getNumOfVertices()];
-//		double[] sourceDependency = new double[this.getNumOfVertices()];
-//
-//		double[]  vertexBetweenness = new double[this.getNumOfVertices()];
 		HashMap<GirvanEdge, Double> edgeBetweenness = new HashMap<GirvanEdge, Double>();
 
 		// setting initial values for variables
-//		for (int w=0; w < vertexBetweenness.length; w++) {
-//			vertexBetweenness[w] = 0;
-//		}
-
 		for (String id : edges.keySet()) {
 			edgeBetweenness.put(edges.get(id), 0.0);
 		}
 
 		// for all vertices
 		for (GirvanNode vertex : girvanMap.keySet()) {
-			//GirvanNode vertex = this.getGirvanVertex("0");
 
 			// initialize for each bfs run
 			bfsInit();
@@ -191,7 +180,6 @@ public class GirvanNewman extends CapGraph{
 						i.numShortestPaths += currVertex.numShortestPaths;
 						i.pred.add(currVertex);
 					}
-
 				}
 			}
 
@@ -220,7 +208,7 @@ public class GirvanNewman extends CapGraph{
 		for (GirvanEdge edge : edgeBetweenness.keySet()) {
 			System.out.println("Edge Betweenness : " + edge + " Value = " + edgeBetweenness.get(edge));
 		}
-		System.out.println(edgeBetweenness.size());
+		System.out.println("brandes(): total number of edges in original graph: " + edgeBetweenness.size());
 
 		return edgeBetweenness;
 	}
@@ -293,7 +281,7 @@ public class GirvanNewman extends CapGraph{
 		
 		visited.add(currVertex);
 		//g = (GirvanNewman) g;
-
+		
 		for (GirvanNode i : ((GirvanNewman) g).getGirvanNeighbours(currVertex)){
 			if (!visited.contains(i)) {
 				dfsVisit(g, i, visited, finished, subGraph);
@@ -317,6 +305,9 @@ public class GirvanNewman extends CapGraph{
 			GirvanNewman tr = new GirvanNewman();
 			for (GirvanNode i : this.girvanMap.keySet()) {
 				int iId = Integer.valueOf(i.getId());
+				if (this.girvanMap.get(i).size() == 0) {
+					tr.addVertex(iId);
+				}
 				for (GirvanNode j : this.girvanMap.get(i)) {
 					int jId = Integer.valueOf(j.getId());
 					if (tr.exportGirvanGraph().containsKey(j) && tr.exportGirvanGraph().containsKey(i)) {
@@ -332,11 +323,96 @@ public class GirvanNewman extends CapGraph{
 			return tr;
 		}
 	
+	/** removes the edges with highest betweenness, if tie - removes all
+	 * @param eBetweenenss : betweenness value of al the edges
+	 */
+	private void removeEdges (HashMap<GirvanEdge, Double> eBetweenness) {
+		
+		HashMap<GirvanEdge, Double> max = maxBetweenness(eBetweenness);
+		
+		for (GirvanEdge curr : max.keySet()) {
+			int source = curr.getSource();
+			int dest = curr.getDestination();
+			GirvanNode sourceNode = getGirvanVertex(Integer.toString(source));
+			GirvanNode destNode = getGirvanVertex(Integer.toString(dest));
+			girvanMap.get(sourceNode).remove(destNode);
+			girvanNumEdges--;
+		}
+		System.out.println("Graph after removing edges: " + girvanMap);
+		System.out.println("Remove Edges -> edges remaining = " + girvanNumEdges);
+	}
+	
+
+	/** returns edges with max betweenness
+	 * @param eBetweeness edge betweenness for the graph
+	 * @return
+	 */
+	private HashMap<GirvanEdge, Double> maxBetweenness(HashMap<GirvanEdge, Double> eBetweenness) {
+		
+		HashMap<GirvanEdge, Double> maxBetweenness = new HashMap<GirvanEdge, Double>();
+		double temp = 0.0;
+		double THRESHOLD = 1e-6;
+		
+		for (GirvanEdge i : eBetweenness.keySet()) {
+
+			int comp = Double.compare(eBetweenness.get(i), temp);
+			
+			if (Math.abs(eBetweenness.get(i) - temp) < THRESHOLD) {
+				maxBetweenness.put(i, temp);
+			}
+			if (Math.abs(eBetweenness.get(i) - temp) > THRESHOLD) {
+				if (comp > 0) {
+					maxBetweenness.clear();
+					temp = eBetweenness.get(i);
+					maxBetweenness.put(i, temp);
+				}
+			} 
+		}
+		return maxBetweenness;
+	}
+	
+	/** find communities until no edges are left
+	 * 
+	 */
+	private List<Graph> findCommunities(int communitySize) {
+		
+		List<Graph> communities = new ArrayList<Graph>();
+		
+		while (communities.size() < communitySize) {
+			HashMap<GirvanEdge, Double> edgeBetweenness = this.brandes();
+			removeEdges(edgeBetweenness);
+ 
+			//if all edges are removed, return individual vertices as communities
+			if (this.girvanNumEdges == 0) {
+				communities = getIndividualCommunities();
+				break;
+			}
+			communities = getSCCs();
+		}	
+		return communities;
+	}
+	
+	/** when we remove all the edges, we return list of graph with individual vertices as individual communities
+	 * as there are no edges. every vertex is a community
+	 * @return list<Graph> with every vertex as individual community
+	 */
+	private List<Graph> getIndividualCommunities(){
+		
+		List<Graph> iCommunity = new ArrayList<Graph>();
+		for (GirvanNode node : getGirvanVertices()) {
+			Graph curr = new GirvanNewman();
+			curr.addVertex(Integer.parseInt(node.getId()));
+			iCommunity.add(curr);
+		}
+		return iCommunity;
+	}
+	
 	//****************************************************************
 	
-	public class GirvanNode{
+ 	public class GirvanNode{
 		
-		private String vertexId;
+		
+ 		private String vertexId;
 		private double distance;
 		private int numShortestPaths;
 		private double sourceDependency;
@@ -491,6 +567,22 @@ public class GirvanNewman extends CapGraph{
 			return true;
 		}
 
+		public int getSource() {
+			return source;
+		}
+
+		public void setSource(int source) {
+			this.source = source;
+		}
+
+		public int getDestination() {
+			return destination;
+		}
+
+		public void setDestination(int destination) {
+			this.destination = destination;
+		}
+
 		private GirvanNewman getEnclosingInstance() {
 			return GirvanNewman.this;
 		}
@@ -524,10 +616,10 @@ public class GirvanNewman extends CapGraph{
 		girvan.addEdge(5, 2);
 		
 		GirvanNewman girvan2 = new GirvanNewman();
-		GraphLoader.loadGraph(girvan2, "data/smallTest.txt");
+		GraphLoader.loadGraph(girvan2, "data/testCommunities2.txt");
 		
 		
-		HashMap<GirvanEdge, Double> edgeBetweenness = girvan2.brandes();
+		//HashMap<GirvanEdge, Double> edgeBetweenness = girvan2.brandes();
 		HashMap<GirvanNode, HashSet<GirvanNode>> graph = girvan2.exportGirvanGraph();
 		System.out.println("Graph = " + graph);
 		
@@ -594,6 +686,20 @@ public class GirvanNewman extends CapGraph{
 //			Graph tr2 = tr;
 //			System.out.println(tr2);
 //			System.out.println(((GirvanNewman) tr2).getGirvanVertex("44").hashCode());
+		
+		
+		// test maxBetweenness()
+		
+		//HashMap<GirvanEdge, Double> between = girvan2.(edgeBetweenness);
+		//girvan2.removeEdges(edgeBetweenness);
+		//System.out.println("==========================================");
+		//System.out.println(between);
+		
+		// test find communities
+		List<Graph> communities = girvan2.findCommunities(4);
+		for (int i = 0; i < communities.size(); i++) {
+			System.out.println(((GirvanNewman) communities.get(i)).getGirvanVertices());
+		}
 		 
 	}
 }

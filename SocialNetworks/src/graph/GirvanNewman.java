@@ -17,7 +17,7 @@ public class GirvanNewman extends CapGraph{
 
 	//private HashMap<Integer, HashSet<Integer>> girvanMap; 
 	private HashMap<GirvanNode, HashSet<GirvanNode>> girvanMap; 
-	private HashMap<GirvanNode, Integer> arrayId;  // parallel map to keep track of nodeIndex in adjacency matrix for modularization 
+	private HashMap<GirvanNode, Integer> arrayIdMap;  // parallel map to keep track of nodeIndex in adjacency matrix for modularization 
 	private int girvanNumVertices;  	// total number of vertices in graph
 	private int girvanNumEdges;		// total number of edges in graph
 	private HashMap<String, GirvanEdge> edges;	// edges in the graph. id is 'source -> destination'
@@ -29,7 +29,7 @@ public class GirvanNewman extends CapGraph{
 
 		girvanMap = new HashMap<GirvanNode, HashSet<GirvanNode>>();
 		edges = new HashMap<String, GirvanEdge>();
-		arrayId = new HashMap<GirvanNode, Integer>();
+		arrayIdMap = new HashMap<GirvanNode, Integer>();
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public class GirvanNewman extends CapGraph{
 		super.addEdge(from, to);
 		GirvanEdge edge = new GirvanEdge(from, to);
 		edges.put(edge.getId(), edge);
-		
+
 		GirvanNode source = this.getGirvanVertex(Integer.toString(from));
 		GirvanNode dest = this.getGirvanVertex(Integer.toString(to));
 		HashSet<GirvanNode> neighbours = girvanMap.get(source);
@@ -48,12 +48,14 @@ public class GirvanNewman extends CapGraph{
 		if (!girvanMap.containsKey(dest)) {
 			return;
 		}
-		
+
 		neighbours.add(dest);
 		girvanMap.put(source, neighbours);
 		girvanNumEdges++;
+		source.incrementDegree();
+		dest.incrementDegree();
 	}
-	
+
 	@Override
 	public void addVertex(int num) {
 		// TODO Auto-generated method stub
@@ -66,7 +68,7 @@ public class GirvanNewman extends CapGraph{
 		girvanMap.put(vertex, neighbours);
 		girvanNumVertices++;
 	}
-	
+
 	public GirvanNode getGirvanVertex(String id) {
 		for (GirvanNode vertex : this.girvanMap.keySet()) {
 			if (vertex.vertexId.equals(id)) {
@@ -75,7 +77,7 @@ public class GirvanNewman extends CapGraph{
 		}
 		return null;
 	}
-	
+
 	public Set<GirvanNode> getGirvanVertices(){
 		return girvanMap.keySet();
 	}
@@ -83,7 +85,7 @@ public class GirvanNewman extends CapGraph{
 	public HashMap getEdges() {
 		return edges;
 	}
-	
+
 	public int getGirvanNumVertices() {
 		return girvanNumVertices;
 	}
@@ -95,22 +97,56 @@ public class GirvanNewman extends CapGraph{
 	public void setGirvanNumEdges(int girvanNumEdges) {
 		this.girvanNumEdges = girvanNumEdges;
 	}
-	
+
 	public Set<GirvanNode> getGirvanNeighbours(GirvanNode vertex){
 		return girvanMap.get(vertex);
 	}
 	
+//	/** prints any two dimensional int array in actual matrix format
+//	 * @param matrix
+//	 */
+//	private void printIntMatrix(int[][] matrix) {
+//		
+//		if (matrix == null) {
+//			return;
+//		}
+//
+//		for (int row = 0; row < matrix.length; row++) {
+//			for (int column = 0; column < matrix[row].length; column++) {
+//				System.out.printf("%4d", matrix[row][column]);
+//			}
+//			System.out.println();
+//		}
+//
+//	}
+
+	/** prints any two dimensional double array
+	 * 
+	 */
+	private void printDoubleMatrix(double[][] matrix) {
+		
+		if (matrix == null) {
+			return;
+		}
+
+		for (int row = 0; row < matrix.length; row++) {
+			for (int column = 0; column < matrix[row].length; column++) {
+				System.out.printf("%.3f  ", matrix[row][column]);
+			}
+			System.out.println();
+		}
+	}
 	public HashMap<GirvanNode, HashSet<GirvanNode>> exportGirvanGraph(){
 		return girvanMap;
 	}
-		
+
 	/**
 	 * initialize the graph for each bfs run
 	 */
 	public void bfsInit() {
-		
+
 		for (GirvanNode currVertex : girvanMap.keySet()) {
-			
+
 			HashSet<GirvanNode> neighbours = girvanMap.get(currVertex);
 			HashSet<GirvanNode> temp = new HashSet<GirvanNode>();
 			for (GirvanNode neighbour : neighbours) {
@@ -123,15 +159,15 @@ public class GirvanNewman extends CapGraph{
 			currVertex.distance = INFINITY;
 			currVertex.numShortestPaths = 0;
 			girvanMap.put(currVertex, temp);
-			
+
 		}
 	}
-	
+
 	/**
 	 *  initialize source dependency of graph to 0.0
 	 */
 	private void sourceDependencyInit() {
-		
+
 		for (GirvanNode i : girvanMap.keySet()) {
 			i.sourceDependency = 0.0;
 			HashSet<GirvanNode> temp = new HashSet<GirvanNode>();
@@ -141,7 +177,7 @@ public class GirvanNewman extends CapGraph{
 			}
 			girvanMap.put(i, temp);
 		}
-		
+
 	}
 
 	public HashMap<GirvanEdge, Double> brandes() {
@@ -188,7 +224,7 @@ public class GirvanNewman extends CapGraph{
 
 			// vertex betweenness / back propagation
 			sourceDependencyInit();
-			
+
 			while (!stack.isEmpty()) {
 				GirvanNode currVertex = stack.pop();
 
@@ -199,7 +235,7 @@ public class GirvanNewman extends CapGraph{
 					double betweennessValue = edgeBetweenness.get(edges.get(edgeId)) + temp;
 					edgeBetweenness.put(edges.get(edgeId), betweennessValue);
 				}
-				
+
 				if (currVertex != vertex) {
 					currVertex.vertexBetweenness += currVertex.sourceDependency;
 				}
@@ -215,31 +251,31 @@ public class GirvanNewman extends CapGraph{
 
 		return edgeBetweenness;
 	}
-		
+
 	@Override
 	public List<Graph> getSCCs() {
-		
+
 		if (this.exportGirvanGraph().isEmpty()) {
 			return null;
 		}
-		
+
 		List<Graph> scc = new ArrayList<Graph>();
-		
+
 		// first iteration of dfs
 		Stack<GirvanNode> vertices = new Stack<GirvanNode>();
 		vertices.addAll(this.girvanMap.keySet());
 		// perform first iteration of dfs, list not required- so passed as null
 		Stack<GirvanNode> finished1 = dfs(this, vertices, null);
-		
+
 		// transpose of graph
 		Graph tr = this.transpose();
-		
+
 		// second iteration of dfs, with list passed in to be populated
 		dfs(tr, finished1, scc);
-		
+
 		return scc;
 	}
-	
+
 	/**
 	 * @param g -> graph object to be explored
 	 * @param vertices -> stack of vertices to be explored in the graph
@@ -247,15 +283,15 @@ public class GirvanNewman extends CapGraph{
 	 * @return stack of vertices in the order algorithm finished visiting them, only required in the first iteration of dfs
 	 */
 	private Stack<GirvanNode> dfs (Graph g, Stack<GirvanNode> vertices, List<Graph> list){
-		
+
 		// initialization
 		HashSet<GirvanNode> visited = new HashSet<GirvanNode>();
 		Stack<GirvanNode> finished = new Stack<GirvanNode>();
-		
+
 		while (!vertices.empty()) {
 			GirvanNode v = vertices.pop();
 			if (!visited.contains(v)) {
-				
+
 				// if second iteration of dfs, pass in subGraph to be populated
 				if (list != null) {
 					Graph subGraph = new GirvanNewman();
@@ -270,7 +306,7 @@ public class GirvanNewman extends CapGraph{
 		}
 		return finished;
 	}
-	
+
 	/**
 	 * called from dfs() method. it explores all the neighbours of current vertex in the graph
 	 * and populates a graph(subGraph) with the strongly connected components 
@@ -281,58 +317,58 @@ public class GirvanNewman extends CapGraph{
 	 * @param subGraph -> graph of strongly connected components, populated for the dfs() method. used in second iteration of dfs
 	 */
 	private void dfsVisit(Graph g, GirvanNode currVertex, HashSet<GirvanNode> visited, Stack<GirvanNode> finished, Graph subGraph){
-		
+
 		visited.add(currVertex);
 		//g = (GirvanNewman) g;
-		
+
 		for (GirvanNode i : ((GirvanNewman) g).getGirvanNeighbours(currVertex)){
 			if (!visited.contains(i)) {
 				dfsVisit(g, i, visited, finished, subGraph);
 			}
 		}
 		finished.push(currVertex);
-		
+
 		// if second iteration of dfs, populate the graph with strongly connected components
 		if (subGraph != null) {
 			subGraph.addVertex(Integer.parseInt(currVertex.getId()));
 		}
 	}
-	
+
 	/**
 	 * @param method to transpose a graph, called from getScc() method
 	 * @return  GirvanNewman graph object
 	 */
 	@Override
 	protected Graph transpose() {
-				
-			GirvanNewman tr = new GirvanNewman();
-			for (GirvanNode i : this.girvanMap.keySet()) {
-				int iId = Integer.valueOf(i.getId());
-				if (this.girvanMap.get(i).size() == 0) {
-					tr.addVertex(iId);
+
+		GirvanNewman tr = new GirvanNewman();
+		for (GirvanNode i : this.girvanMap.keySet()) {
+			int iId = Integer.valueOf(i.getId());
+			if (this.girvanMap.get(i).size() == 0) {
+				tr.addVertex(iId);
+			}
+			for (GirvanNode j : this.girvanMap.get(i)) {
+				int jId = Integer.valueOf(j.getId());
+				if (tr.exportGirvanGraph().containsKey(j) && tr.exportGirvanGraph().containsKey(i)) {
+					tr.addEdge(jId, iId);
 				}
-				for (GirvanNode j : this.girvanMap.get(i)) {
-					int jId = Integer.valueOf(j.getId());
-					if (tr.exportGirvanGraph().containsKey(j) && tr.exportGirvanGraph().containsKey(i)) {
-						tr.addEdge(jId, iId);
-					}
-					else {
-						tr.addVertex(jId);
-						tr.addVertex(iId);
-						tr.addEdge(jId, iId); 
-					}
+				else {
+					tr.addVertex(jId);
+					tr.addVertex(iId);
+					tr.addEdge(jId, iId); 
 				}
 			}
-			return tr;
 		}
-	
+		return tr;
+	}
+
 	/** removes the edges with highest betweenness, if tie - removes all
 	 * @param eBetweenenss : betweenness value of al the edges
 	 */
 	private void removeEdges (HashMap<GirvanEdge, Double> eBetweenness) {
-		
+
 		HashMap<GirvanEdge, Double> max = maxBetweenness(eBetweenness);
-		
+
 		for (GirvanEdge curr : max.keySet()) {
 			int source = curr.getSource();
 			int dest = curr.getDestination();
@@ -344,22 +380,22 @@ public class GirvanNewman extends CapGraph{
 		System.out.println("Graph after removing edges: " + girvanMap);
 		System.out.println("Remove Edges -> edges remaining = " + girvanNumEdges);
 	}
-	
+
 
 	/** returns edges with max betweenness
 	 * @param eBetweeness edge betweenness for the graph
 	 * @return
 	 */
 	private HashMap<GirvanEdge, Double> maxBetweenness(HashMap<GirvanEdge, Double> eBetweenness) {
-		
+
 		HashMap<GirvanEdge, Double> maxBetweenness = new HashMap<GirvanEdge, Double>();
 		double temp = 0.0;
 		double THRESHOLD = 1e-6;
-		
+
 		for (GirvanEdge i : eBetweenness.keySet()) {
 
 			int comp = Double.compare(eBetweenness.get(i), temp);
-			
+
 			if (Math.abs(eBetweenness.get(i) - temp) < THRESHOLD) {
 				maxBetweenness.put(i, temp);
 			}
@@ -373,34 +409,32 @@ public class GirvanNewman extends CapGraph{
 		}
 		return maxBetweenness;
 	}
-	
+
 	/** find communities until no edges are left
 	 * 
 	 */
 	private List<Graph> findCommunities(int communitySize) {
-		
+
 		List<Graph> communities = new ArrayList<Graph>();
 		
+		// to map the modularity score of the graph to the community
+		HashMap<List<Graph>, Double> commmunityModularityMap = new HashMap<List<Graph>, Double>(); 
+
 		while (communities.size() < communitySize) {
 			HashMap<GirvanEdge, Double> edgeBetweenness = this.brandes();
 			removeEdges(edgeBetweenness);
- 
-			//if all edges are removed, return individual vertices as communities
-			if (this.girvanNumEdges == 0) {
-				communities = getIndividualCommunities();
-				break;
-			}
 			communities = getSCCs();
 		}	
 		return communities;
 	}
-	
-	/** when we remove all the edges, we return list of graph with individual vertices as individual communities
+
+	/** METHOD NOT USED 
+	 * when we remove all the edges, we return list of graph with individual vertices as individual communities
 	 * as there are no edges. every vertex is a community
 	 * @return list<Graph> with every vertex as individual community
 	 */
 	private List<Graph> getIndividualCommunities(){
-		
+
 		List<Graph> iCommunity = new ArrayList<Graph>();
 		for (GirvanNode node : getGirvanVertices()) {
 			Graph curr = new GirvanNewman();
@@ -409,66 +443,125 @@ public class GirvanNewman extends CapGraph{
 		}
 		return iCommunity;
 	}
-	
+
 	/**
 	 * assign arrayIds for every node in the graph for the Adjacency matrix
 	 * dataset dont always start from '0', so we have to assign ids for the graph nodes to be compatible
 	 */
 	private void assignArrayIds() {
-		
+
 		int id = 0;
 		for (GirvanNode curr : this.getGirvanVertices()) {
-			arrayId.put(curr, id++);
+			arrayIdMap.put(curr, id++);
 		}
 	}
-	
-	/**calculates the Modularity matrix and returns it
-	 *  
+
+	/**calculates the Modularity matrix i-e (AdjacencyMatrix - ProbabilityMatrix) and returns it
 	 * 
 	 * @return returns the modularity matrix
 	 */
-	private int[][] getModularityMartix() {
+	private double[][] getModularityMartix() {
+
+		double[][] modularityMatrix = new double[this.getGirvanNumVertices()][this.getGirvanNumVertices()];
+		double[][] adjacencyMatrix = this.getAdjacencyMatrix();
+		double[][] probabilityMatrix = this.getProbabilityMatrix();
 		
-		return null;
+		if (adjacencyMatrix == null || probabilityMatrix == null) {
+			return null;
+		}
+		
+		for (int row = 0; row < modularityMatrix.length; row++) {
+			for (int column = 0; column < modularityMatrix[row].length; column++) {
+				modularityMatrix[row][column] = adjacencyMatrix[row][column] - probabilityMatrix[row][column];
+			}
+		}
+		return modularityMatrix;
 	}
-	
-	private int[][] getAdjacencyMatrix(){
-		
+
+	/** generates the adjacency matrix for the graph
+	 * @return
+	 */
+	private double[][] getAdjacencyMatrix(){
+
 		// create a n x n adjacency matrix
-		int[][] adjacencyMatrix = new int[this.getGirvanNumVertices()][this.getGirvanNumVertices()];
-		
+		double[][] adjacencyMatrix = new double[this.getGirvanNumVertices()][this.getGirvanNumVertices()];
+
 		for (GirvanNode i : this.getGirvanVertices()) {
-			
+
 			for (GirvanNode w : this.getGirvanNeighbours(i)) {
-				
-				adjacencyMatrix[arrayId.get(i)][arrayId.get(w)] = 1;
+
+				adjacencyMatrix[arrayIdMap.get(i)][arrayIdMap.get(w)] = 1.0;
 			}
 		}
 		return adjacencyMatrix;
 	}
-	
-	private int[][] getProbabilityMatrix() {
+
+	/** probability of edge (1->2) = (degree of '1' * degree of '2') / 2* total number of edges
+	 * @return return the probability matrix of the graph
+	 */
+	private double[][] getProbabilityMatrix() {
+
+		double[][] probabilityMatrix = new double [this.getGirvanNumVertices()][this.getGirvanNumVertices()];
 		
-		return null;
+		for (GirvanNode i : this.getGirvanVertices()) {
+			for (GirvanNode w : this.getGirvanVertices()){
+				probabilityMatrix[arrayIdMap.get(i)][arrayIdMap.get(w)] = (double)i.getDegree() * w.getDegree() /(2*this.getGirvanNumEdges());
+			}
+		}
+		return probabilityMatrix;
 	}
-	//****************************************************************
 	
- 	public class GirvanNode{
+	/** calculates the total modularity of the graph by computing the modularity of individual communities and adding them up
+	 * @param communities -> communities returned by eliminating the edges
+	 * @param modularityMatrix -> modularity matrix of the graph
+	 * @return total modularity of the graph
+	 */
+	private double caluclateModularity(List<Graph> communities, double[][] modularityMatrix) {
 		
- 		private String vertexId;
+		double totalModularity = 0.0;
+		
+		for (Graph community : communities) {
+			
+			Set<GirvanNode> vertices = ((GirvanNewman) community).getGirvanVertices();
+			
+			for (GirvanNode node : vertices) {
+				
+				for (GirvanNode neighbour : ((GirvanNewman) community).getGirvanNeighbours(node)) {
+					
+					// if 'node' and 'neighbour' are neighbours in given community
+					// then calculate the modularity
+					if (vertices.contains(neighbour)) {
+						totalModularity += (double) modularityMatrix[arrayIdMap.get(node)][arrayIdMap.get(neighbour)];
+					}
+				}
+			}
+		}
+		totalModularity = (double) totalModularity/4;
+		
+		return totalModularity;
+	}
+	
+	
+
+	//****************************************************************
+
+	public class GirvanNode{
+
+		private String vertexId;
 		private double distance;
 		private int numShortestPaths;
 		private double sourceDependency;
 		private double vertexBetweenness;
 		private List<GirvanNode> pred;
-		
-		
+		private int degree;
+
+
 		public GirvanNode(int vertex) {
-			
+
 			vertexId = String.valueOf(vertex);
 			pred = new ArrayList<GirvanNode>();
 		}
-		
+
 		public List<GirvanNode> getPred() {
 			return pred;
 		}
@@ -480,7 +573,7 @@ public class GirvanNewman extends CapGraph{
 		public String getId() {
 			return vertexId;
 		}
-		
+
 		public double getDistance() {
 			return distance;
 		}
@@ -512,7 +605,19 @@ public class GirvanNewman extends CapGraph{
 		public void setDistance(double distance) {
 			this.distance = distance;
 		}
-		
+
+		public int getDegree() {
+			return degree;
+		}
+
+		//		public void setDegree(int degree) {
+		//			this.degree = degree;
+		//		}
+
+		public void incrementDegree() {
+			this.degree++;
+		}
+
 		public String toString() {
 			return vertexId;
 		}
@@ -535,8 +640,8 @@ public class GirvanNewman extends CapGraph{
 			if (getClass() != obj.getClass())
 				return false;
 			GirvanNode other = (GirvanNode) obj;
-//			if (!getEnclosingInstance().equals(other.getEnclosingInstance()))
-//				return false;
+			//			if (!getEnclosingInstance().equals(other.getEnclosingInstance()))
+			//				return false;
 			if (vertexId == null) {
 				if (other.vertexId != null)
 					return false;
@@ -548,12 +653,12 @@ public class GirvanNewman extends CapGraph{
 		private GirvanNewman getEnclosingInstance() {
 			return GirvanNewman.this;
 		}
-		
-		
-		
+
+
+
 	}
-		
-	
+
+
 	// ***************************************************************
 
 	public class GirvanEdge {
@@ -630,9 +735,9 @@ public class GirvanNewman extends CapGraph{
 			return GirvanNewman.this;
 		}
 	}
-	
+
 	// ***************************************************************
-	
+
 	public static void main(String[] args) {
 		GirvanNewman girvan = new GirvanNewman();
 		girvan.addVertex(0);
@@ -642,7 +747,7 @@ public class GirvanNewman extends CapGraph{
 		girvan.addVertex(4);
 		girvan.addVertex(5);
 		girvan.addVertex(6);
-		
+
 		girvan.addEdge(0, 1);
 		girvan.addEdge(1, 0);
 		girvan.addEdge(0, 3);
@@ -657,105 +762,120 @@ public class GirvanNewman extends CapGraph{
 		girvan.addEdge(5, 4);
 		girvan.addEdge(2, 5);
 		girvan.addEdge(5, 2);
-		
+
 		GirvanNewman girvan2 = new GirvanNewman();
 		GraphLoader.loadGraph(girvan2, "data/testCommunities2.txt");
-		
-		
+
+
 		//HashMap<GirvanEdge, Double> edgeBetweenness = girvan2.brandes();
 		HashMap<GirvanNode, HashSet<GirvanNode>> graph = girvan2.exportGirvanGraph();
 		System.out.println("Graph = " + graph);
-		
+
 		// test Scc()
-//		girvan2 = new GirvanNewman();
-//		GraphLoader.loadGraph(girvan2, "data/sccTestFile.txt");
-//		List<Graph> scc = girvan2.getSCCs();
-//		for (int i = 0; i < scc.size(); i++) {
-//			System.out.println(scc.get(i));
-//		}
-		
+		//		girvan2 = new GirvanNewman();
+		//		GraphLoader.loadGraph(girvan2, "data/sccTestFile.txt");
+		//		List<Graph> scc = girvan2.getSCCs();
+		//		for (int i = 0; i < scc.size(); i++) {
+		//			System.out.println(scc.get(i));
+		//		}
+
 		// transpose check
-//		GirvanNewman tr = (GirvanNewman) girvan2.transpose();
-//		System.out.println(tr instanceof GirvanNewman);
-//		System.out.println("Girvan Graph: " + girvan2.exportGirvanGraph());
-//		System.out.println("Transpose of Girvan Graph: " + ((GirvanNewman)tr).girvanMap);
-//		
-//		GirvanNode testNode = girvan2.new GirvanNode(65);
-//		System.out.println(tr.exportGirvanGraph().containsKey(testNode));
-//		System.out.println(girvan2.getGirvanNeighbours(testNode).hashCode());
-//		
-//		System.out.println("***********************************************************");
-//		GirvanNode testNode2 = tr.getGirvanVertex("65");
-//		System.out.println(testNode2.hashCode());
-//		System.out.println(girvan2.exportGirvanGraph().containsKey(testNode2));
-//		System.out.println(testNode2 instanceof GirvanNode);
-		
-//		HashSet<GirvanNode> test = new HashSet<GirvanNode>();
-//		HashMap<GirvanNode, HashSet<GirvanNode>> map = new HashMap<GirvanNode, HashSet<GirvanNode>>();
-//		GirvanNode testNode = girvan2.new GirvanNode(100);
-//		GirvanNode testNode2 = girvan2.new GirvanNode(100);
-//		map.put(testNode, test);
-//		System.out.println(map.get(testNode2));
-//		for (GirvanNode i : map.get(testNode)) {
-//			System.out.println("test loop for null set");
-//		}
-		
-//		GirvanNode vertex = girvan2.getGirvanVertex("65");
-//		System.out.println("getNeighboursTest : " + girvan2.getGirvanNeighbours(vertex));
-		
-//		GirvanNewman tr = new GirvanNewman();
-//		//for (GirvanNode i : this.girvanMap.keySet()) {
-//		GirvanNode i = girvan2.getGirvanVertex("32");
-//			int iId = Integer.valueOf(i.getId());
-//			System.out.println("Transpose : " + iId + " String: " + i.getId());
-//			for (GirvanNode j : girvan2.girvanMap.get(i)) {
-//				int jId = Integer.valueOf(j.getId());
-//				System.out.println("Transpose : " + jId + " String: " + j.getId());
-//				if (tr.exportGirvanGraph().containsKey(j) && tr.exportGirvanGraph().containsKey(i)) {
-//					tr.addEdge(jId, iId);
-//					System.out.println("Hello");
-//				}
-//				else {
-//					tr.addVertex(jId);
-//					tr.addVertex(iId);
-//					tr.addEdge(jId, iId);
-//				}
-//			}
-//		//}
-//			
-//			System.out.println(tr.getGirvanVertex("44").hashCode());
-//			System.out.println(girvan2.getGirvanVertex("44").hashCode());
-//			
-//			Graph tr2 = tr;
-//			System.out.println(tr2);
-//			System.out.println(((GirvanNewman) tr2).getGirvanVertex("44").hashCode());
-		
-		
+		//		GirvanNewman tr = (GirvanNewman) girvan2.transpose();
+		//		System.out.println(tr instanceof GirvanNewman);
+		//		System.out.println("Girvan Graph: " + girvan2.exportGirvanGraph());
+		//		System.out.println("Transpose of Girvan Graph: " + ((GirvanNewman)tr).girvanMap);
+		//		
+		//		GirvanNode testNode = girvan2.new GirvanNode(65);
+		//		System.out.println(tr.exportGirvanGraph().containsKey(testNode));
+		//		System.out.println(girvan2.getGirvanNeighbours(testNode).hashCode());
+		//		
+		//		System.out.println("***********************************************************");
+		//		GirvanNode testNode2 = tr.getGirvanVertex("65");
+		//		System.out.println(testNode2.hashCode());
+		//		System.out.println(girvan2.exportGirvanGraph().containsKey(testNode2));
+		//		System.out.println(testNode2 instanceof GirvanNode);
+
+		//		HashSet<GirvanNode> test = new HashSet<GirvanNode>();
+		//		HashMap<GirvanNode, HashSet<GirvanNode>> map = new HashMap<GirvanNode, HashSet<GirvanNode>>();
+		//		GirvanNode testNode = girvan2.new GirvanNode(100);
+		//		GirvanNode testNode2 = girvan2.new GirvanNode(100);
+		//		map.put(testNode, test);
+		//		System.out.println(map.get(testNode2));
+		//		for (GirvanNode i : map.get(testNode)) {
+		//			System.out.println("test loop for null set");
+		//		}
+
+		//		GirvanNode vertex = girvan2.getGirvanVertex("65");
+		//		System.out.println("getNeighboursTest : " + girvan2.getGirvanNeighbours(vertex));
+
+		//		GirvanNewman tr = new GirvanNewman();
+		//		//for (GirvanNode i : this.girvanMap.keySet()) {
+		//		GirvanNode i = girvan2.getGirvanVertex("32");
+		//			int iId = Integer.valueOf(i.getId());
+		//			System.out.println("Transpose : " + iId + " String: " + i.getId());
+		//			for (GirvanNode j : girvan2.girvanMap.get(i)) {
+		//				int jId = Integer.valueOf(j.getId());
+		//				System.out.println("Transpose : " + jId + " String: " + j.getId());
+		//				if (tr.exportGirvanGraph().containsKey(j) && tr.exportGirvanGraph().containsKey(i)) {
+		//					tr.addEdge(jId, iId);
+		//					System.out.println("Hello");
+		//				}
+		//				else {
+		//					tr.addVertex(jId);
+		//					tr.addVertex(iId);
+		//					tr.addEdge(jId, iId);
+		//				}
+		//			}
+		//		//}
+		//			
+		//			System.out.println(tr.getGirvanVertex("44").hashCode());
+		//			System.out.println(girvan2.getGirvanVertex("44").hashCode());
+		//			
+		//			Graph tr2 = tr;
+		//			System.out.println(tr2);
+		//			System.out.println(((GirvanNewman) tr2).getGirvanVertex("44").hashCode());
+
+
 		// test maxBetweenness()
-		
+
 		//HashMap<GirvanEdge, Double> between = girvan2.(edgeBetweenness);
 		//girvan2.removeEdges(edgeBetweenness);
 		//System.out.println("==========================================");
 		//System.out.println(between);
-		
+
 		// test find communities
-//		List<Graph> communities = girvan2.findCommunities(4);
-//		for (int i = 0; i < communities.size(); i++) {
-//			System.out.println(((GirvanNewman) communities.get(i)).getGirvanVertices());
-//		}
-		
-		// test arrayId and AdjacencyMatrix
-		girvan2.assignArrayIds();
-		int[][] matrix = girvan2.getAdjacencyMatrix();
-		System.out.println("-----------------------------------------------------------");
-		System.out.println(Arrays.deepToString(matrix));
+		List<Graph> communities = girvan2.findCommunities(4);
+		for (int i = 0; i < communities.size(); i++) {
+			System.out.println(((GirvanNewman) communities.get(i)).getGirvanVertices());
+		}
 
-		System.out.println("Array Ids: ");
-		System.out.println(girvan2.arrayId);
-		
+		// test arrayId, AdjacencyMatrix and probability matrix
+//		girvan2.assignArrayIds();
+//		double[][] adjacencyMatrix = girvan2.getAdjacencyMatrix();
+//		System.out.println("-----------------------------------------------------------");
+//
+//		double [][] probabilityMatrix = girvan2.getProbabilityMatrix();
+//		double [][] modularityMatrix = girvan2.getModularityMartix();
+//		System.out.println("Adjacency Matrix");
+//		girvan2.printDoubleMatrix(adjacencyMatrix);
+//		System.out.println();
+//		System.out.println("Probability Matrix");
+//		girvan2.printDoubleMatrix(probabilityMatrix);
+//		System.out.println();
+//		System.out.println("Modularity Matrix");
+//		girvan2.printDoubleMatrix(modularityMatrix);
+//
+//		System.out.println("Array Ids: ");
+//		System.out.println(girvan2.arrayIdMap);
 
-		
-		 
+		// test degree
+		//		for (GirvanNode curr : girvan2.getGirvanVertices()) {
+		//			System.out.println("Degree of vertex: " + curr + " is = " + curr.getDegree());
+		//		}
+
+
+
+
 	}
 }
 

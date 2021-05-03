@@ -101,7 +101,7 @@ public class GirvanNewman2 extends CapGraph{
 
 	/**
 	 * finds the shortest paths in a graph based on one vertex
-	 * @param g -> graph of the object
+	 * @param jungGraph -> graph of the object
 	 * @param vertex -> vertex to find the shortest paths from
 	 * @param paths -> an array to update the number of paths from the vertex to all the other vertices
 	 * @param dist -> distance of the shortest path from vertex

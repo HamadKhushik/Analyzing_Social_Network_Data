@@ -101,24 +101,6 @@ public class GirvanNewman extends CapGraph{
 	public Set<GirvanNode> getGirvanNeighbours(GirvanNode vertex){
 		return girvanMap.get(vertex);
 	}
-	
-//	/** prints any two dimensional int array in actual matrix format
-//	 * @param matrix
-//	 */
-//	private void printIntMatrix(int[][] matrix) {
-//		
-//		if (matrix == null) {
-//			return;
-//		}
-//
-//		for (int row = 0; row < matrix.length; row++) {
-//			for (int column = 0; column < matrix[row].length; column++) {
-//				System.out.printf("%4d", matrix[row][column]);
-//			}
-//			System.out.println();
-//		}
-//
-//	}
 
 	/** prints any two dimensional double array
 	 * 
@@ -136,6 +118,26 @@ public class GirvanNewman extends CapGraph{
 			System.out.println();
 		}
 	}
+	
+	/** prints the community structure/structures found
+	 * @param optimalMap
+	 */
+	private void printCommunities(HashMap<List<Graph>, Double> optimalMap) {
+		
+		System.out.println("Community structures found with maximum Modularity are: " + optimalMap.size());
+		int count = 1;
+		
+		for (List<Graph> community : optimalMap.keySet()) {
+			System.out.println("************************************************");
+			System.out.println("Community Structure #  " + count++ + " : ");
+			System.out.printf("Modularity Score for this structure is: " + "%.4f",optimalMap.get(community));
+			System.out.println("\r\nCommunities detected within this structure are: " + community.size());
+			for (int i = 0; i < community.size(); i++) {
+				System.out.println("Community No: " + (i+1) + " -> " + community.get(i));
+			}
+		}
+	}
+	
 	public HashMap<GirvanNode, HashSet<GirvanNode>> exportGirvanGraph(){
 		return girvanMap;
 	}
@@ -243,11 +245,11 @@ public class GirvanNewman extends CapGraph{
 		}
 
 		// checking values/testing
-		System.out.println("***************************************************************************");
-		for (GirvanEdge edge : edgeBetweenness.keySet()) {
-			System.out.println("Edge Betweenness : " + edge + " Value = " + edgeBetweenness.get(edge));
-		}
-		System.out.println("brandes(): total number of edges in original graph: " + edgeBetweenness.size());
+//		System.out.println("***************************************************************************");
+//		for (GirvanEdge edge : edgeBetweenness.keySet()) {
+//			System.out.println("Edge Betweenness : " + edge + " Value = " + edgeBetweenness.get(edge));
+//		}
+//		System.out.println("brandes(): total number of edges in original graph: " + edgeBetweenness.size());
 
 		return edgeBetweenness;
 	}
@@ -413,19 +415,62 @@ public class GirvanNewman extends CapGraph{
 	/** find communities until no edges are left
 	 * 
 	 */
-	private List<Graph> findCommunities(int communitySize) {
+	private HashMap<List<Graph>, Double> getCommunities() {
 
 		List<Graph> communities = new ArrayList<Graph>();
+		this.assignArrayIds();
 		
-		// to map the modularity score of the graph to the community
-		HashMap<List<Graph>, Double> commmunityModularityMap = new HashMap<List<Graph>, Double>(); 
-
-		while (communities.size() < communitySize) {
+		// to map the modularity score of the community structure
+		HashMap<List<Graph>, Double> communityModularityMap = new HashMap<List<Graph>, Double>();
+		double[][] modularityMatrix = this.getModularityMartix();
+		double modularity = 0.0;
+		// get total number of edges before removing edges -> required for calculating modularity
+		int numOfEdges = this.getGirvanNumEdges();
+		
+		while (this.getGirvanNumEdges() > 0) {
 			HashMap<GirvanEdge, Double> edgeBetweenness = this.brandes();
 			removeEdges(edgeBetweenness);
 			communities = getSCCs();
-		}	
-		return communities;
+			modularity = this.getModularity(communities, modularityMatrix, numOfEdges);
+			communityModularityMap.put(communities, modularity);
+		}
+		
+		// get the community structure/structures with maximum modularity
+//		communityModularityMap = this.getOptimalCommunities(communityModularityMap);
+//		this.printCommunities(communityModularityMap);
+		
+		return communityModularityMap;
+	}
+	
+	/** finds the community structures/structures with maximum modularity value and returns its map
+	 * @param communityModularityMap -> mapping of community structures found and their corresponding modularity value
+	 * @return optimalCommunityMap -> mapping of community structure/structures with maximum modularity value
+	 */
+	public HashMap<List<Graph>, Double> getOptimalCommunities(){
+
+		HashMap<List<Graph>, Double> optimalCommunitiesMap = new HashMap<List<Graph>, Double>();
+		double max = 0.0;
+		double THRESHOLD = 1e-6;  // tolerance for double calculation
+		
+		HashMap<List<Graph>, Double> communityModularityMap = this.getCommunities();
+		
+		for (List<Graph> communities : communityModularityMap.keySet()) {
+
+			int comp = Double.compare(communityModularityMap.get(communities), max);
+
+			if (Math.abs(communityModularityMap.get(communities) - max) < THRESHOLD) {
+				optimalCommunitiesMap.put(communities, communityModularityMap.get(communities));
+			}
+
+			if (Math.abs(communityModularityMap.get(communities) - max) > THRESHOLD) {
+				if (comp > 0) {
+					optimalCommunitiesMap.clear();
+					optimalCommunitiesMap.put(communities, communityModularityMap.get(communities));
+					max = communityModularityMap.get(communities);
+				}
+			}
+		}
+		return optimalCommunitiesMap;
 	}
 
 	/** METHOD NOT USED 
@@ -516,7 +561,7 @@ public class GirvanNewman extends CapGraph{
 	 * @param modularityMatrix -> modularity matrix of the graph
 	 * @return total modularity of the graph
 	 */
-	private double caluclateModularity(List<Graph> communities, double[][] modularityMatrix) {
+	private double getModularity(List<Graph> communities, double[][] modularityMatrix, int numOfEdges) {
 		
 		double totalModularity = 0.0;
 		
@@ -525,8 +570,8 @@ public class GirvanNewman extends CapGraph{
 			Set<GirvanNode> vertices = ((GirvanNewman) community).getGirvanVertices();
 			
 			for (GirvanNode node : vertices) {
-				
-				for (GirvanNode neighbour : ((GirvanNewman) community).getGirvanNeighbours(node)) {
+
+				for (GirvanNode neighbour : ((GirvanNewman) this).getGirvanNeighbours(node)) {
 					
 					// if 'node' and 'neighbour' are neighbours in given community
 					// then calculate the modularity
@@ -536,7 +581,8 @@ public class GirvanNewman extends CapGraph{
 				}
 			}
 		}
-		totalModularity = (double) totalModularity/4;
+		
+		totalModularity = (double) totalModularity/(2*numOfEdges);
 		
 		return totalModularity;
 	}
@@ -764,12 +810,12 @@ public class GirvanNewman extends CapGraph{
 		girvan.addEdge(5, 2);
 
 		GirvanNewman girvan2 = new GirvanNewman();
-		GraphLoader.loadGraph(girvan2, "data/testCommunities2.txt");
+		//GraphLoader.loadGraph(girvan2, "data/facebook_1000.txt");
 
 
 		//HashMap<GirvanEdge, Double> edgeBetweenness = girvan2.brandes();
-		HashMap<GirvanNode, HashSet<GirvanNode>> graph = girvan2.exportGirvanGraph();
-		System.out.println("Graph = " + graph);
+//HashMap<GirvanNode, HashSet<GirvanNode>> graph = girvan2.exportGirvanGraph();
+//System.out.println("Graph = " + graph);
 
 		// test Scc()
 		//		girvan2 = new GirvanNewman();
@@ -844,10 +890,10 @@ public class GirvanNewman extends CapGraph{
 		//System.out.println(between);
 
 		// test find communities
-		List<Graph> communities = girvan2.findCommunities(4);
-		for (int i = 0; i < communities.size(); i++) {
-			System.out.println(((GirvanNewman) communities.get(i)).getGirvanVertices());
-		}
+//		List<Graph> communities = girvan2.findCommunities(4);
+//		for (int i = 0; i < communities.size(); i++) {
+//			System.out.println(((GirvanNewman) communities.get(i)).getGirvanVertices());
+//		}
 
 		// test arrayId, AdjacencyMatrix and probability matrix
 //		girvan2.assignArrayIds();
@@ -872,10 +918,36 @@ public class GirvanNewman extends CapGraph{
 		//		for (GirvanNode curr : girvan2.getGirvanVertices()) {
 		//			System.out.println("Degree of vertex: " + curr + " is = " + curr.getDegree());
 		//		}
-
-
-
-
+		
+		
+		// test getOptimalCommunities
+//	HashMap<List<Graph>, Double> communityMap = girvan2.getCommunities();
+//	girvan2.printCommunities(communityMap);
+//		for (List<Graph> curr : communityMap.keySet()) {
+//			System.out.println(curr + " Modularity " + communityMap.get(curr));
+//		}
+//		HashMap<List<Graph>, Double> currStructure = new HashMap<List<Graph>, Double>();
+//		double value = 1.000001;
+//		for (List<Graph> community : communityMap.keySet()) {
+//			currStructure.put(community, value);
+//			System.out.println("Value: " + value);
+//			value += 0.000001;
+//		}
+//		System.out.println("******************** optimal Structure********************************");
+//		System.out.println("communityMap size: " + communityMap.size());
+//		HashMap<List<Graph>, Double> optimalStructure = girvan2.getOptimalCommunities(currStructure);
+//		for (List<Graph> curr : optimalStructure.keySet()) {
+//			System.out.println( curr);
+//			System.out.println(optimalStructure.get(curr));
+//		}
+		
+//		// test modularity for individual communities
+//		girvan2.assignArrayIds();
+//		List<Graph> individualCommunities = girvan2.getIndividualCommunities();
+//		double modularity = girvan2.getModularity(individualCommunities, girvan2.getModularityMartix());
+//		System.out.println(modularity);
+		
+		
 	}
 }
 

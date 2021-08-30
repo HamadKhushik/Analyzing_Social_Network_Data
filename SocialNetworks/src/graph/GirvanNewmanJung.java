@@ -19,9 +19,8 @@ public class GirvanNewmanJung {
 		
 		Graph<Integer, String> jungGraph = new DirectedSparseGraph<Integer, String>();
 		JungGraphLoader.loadGraph(jungGraph, "data/facebook_1000.txt");
-		System.out.println("Hello");
-		System.out.println(jungGraph.getEdgeCount());
-		EdgeBetweennessClusterer<Integer, String> clusterer = new EdgeBetweennessClusterer<Integer, String>(10);
+		System.out.println("Total Number of edges in the graph are: " + jungGraph.getEdgeCount());
+		EdgeBetweennessClusterer<Integer, String> clusterer = new EdgeBetweennessClusterer<Integer, String>(2000);
 		System.out.println(clusterer.transform(jungGraph));
 
 	}

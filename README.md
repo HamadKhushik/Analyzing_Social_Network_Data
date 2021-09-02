@@ -20,7 +20,7 @@ Girvan-Newman Algorithm is implemented in two ways
 
 ----------------------------------------------------------------------------------------------------------------------
 
-
+-------------------------------------------------------------------------------------------------------------------------
 
 Data Structure: 
 ---------------
@@ -51,34 +51,38 @@ O(m) { O(n2 *m) + O(m) + O(n*m) + O(n*m)} -> ignoring the smaller terms
   
 --------------------------------------------------------------------------------------------------------------------------
 
+
+--------------------------------------------------------------------------------------------------------------------------
 Class Design
 =============
 
-Class name: GirvanNewman  
-
+Class name: GirvanNewman
+--------------------------
 This class extends CapGraph class to make it compatible with the provided code. This is the main class to find communities in a graph using Girvan-Newman Edge Betweenness algorithm. This class performs all the functions to find the communities in the graph. It has two inner classes for Vertex and Edge in the graph.
 
 Class name: GirvanNode  
-
+--------------------------
 This is a inner class of Girvan Newman class and serves as the vertex for the graph to be analysed by Girvan Newman class.
 
 Class name: GirvanEdge  
-
+------------------------
 This is a inner class of Girvan Newman class and serves as the edge for the graph to be analysed by Girvan Newman class.
 
 Class name: GirvanNewmanJung  
-
+--------------------------------
 This class do not have lot of code and uses JUNG library to find communities in the graph. This class depends on JungGraphLoader class to load the graph for GirvanNewmanJung class to work on.
 
 Class name: JungGraphLoader  
-
+--------------------------------
 Purpose and description of class: The only purpose of this class is to load the graph for GiranNewmanJung class. It has only one static method which loads the graph.
 
 -------------------------------------------------------------------------------------------------------------------------------
  
+ 
+----------------------------------------------------------------------------------------------------------------------------------
 Overall Design: 
 =================
-The design is simple and focused towards readability.   
+The design is simple and focused towards readability.  
 GirvanNewman class is used to implement the Girvan Newman Algorithm from without any libraries(scratch)   
 GirvanNewmanJung class implements the algorithm using the JUNG library.  
 GirvanNewman class has the major chunk of code. It extends the CapGraph class to make it compatible with provided Graph Interface and also to re-use the code written in CapGraph class.  

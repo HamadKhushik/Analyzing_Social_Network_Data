@@ -17,8 +17,8 @@ Girvan-Newman Algorithm is implemented in two ways
 
 
 
--> Data Structure: 
-===================
+Data Structure: 
+---------------
 The main Data Structure used is graph using the adjacency list. However, to calculate the modularity, modularity matrix had to be calculated for which adjacency matrix had to be calculated as well (which is used only for modularity calculation).
 
 
@@ -28,21 +28,22 @@ The main algorithm used is Girvan-Newman Edge Betweenness Algorithm for communit
 
 
 Algorithm analysis: 
-=====================
+--------------------
 Total running time of the algorithm is O(n2m2), where n is the number of vertices and m is the total number of edges. 
-This time complexity is calculated from the getCommunities() method.
-In getCommunities() method, I have a while loop which loops until no edges are left i-e O(m). within this loop, methods called are as follows with their complexities
-brandes() -> 			O(n2 * m)
-removeEdges() -> 		O(m)
-getSCCs()->			O(n * m)
-getModularity() -> 		O(n * m)
+This time complexity is calculated from the getCommunities() method.  
 
-combining all the above complexities gives us the following
-O(m) { O(n2 *m) + O(m) + O(n*m) + O(n*m)} -> ignoring the smaller terms
-= O(m) {O(n2*m)}
-= O(m) * O(n2*m)
-= O(n2*m2)
-
+In getCommunities() method, I have a while loop which loops until no edges are left i-e O(m). within this loop, methods called   are as follows with their complexities  
+brandes() -> 			O(n2 * m)  
+removeEdges() -> 		O(m)  
+getSCCs()->			O(n * m)  
+getModularity() -> 		O(n * m)  
+  
+combining all the above complexities gives us the following  
+O(m) { O(n2 *m) + O(m) + O(n*m) + O(n*m)} -> ignoring the smaller terms  
+= O(m) {O(n2*m)}  
+= O(m) * O(n2*m)  
+= O(n2*m2)  
+  
 --------------------------------------------------------------------------------------------------------------------------
 
 Class Design
@@ -64,8 +65,11 @@ Purpose and description of class: The only purpose of this class is to load the 
  
 Overall Design: 
 =================
-The design is simple and focused towards readability. GirvanNewman class is used to implement the Girvan Newman Algorithm and GirvanNewmanJung class implements the algorithm using the JUNG library.
-GirvanNewman class has the major chunk of code. It extends the CapGraph class to make it compatible with provided Graph Interface and also to re-use the code written in CapGraph class.
+The design is simple and focused towards readability.   
+
+GirvanNewman class is used to implement the Girvan Newman Algorithm from without any libraries(scratch)   
+GirvanNewmanJung class implements the algorithm using the JUNG library.  
+GirvanNewman class has the major chunk of code. It extends the CapGraph class to make it compatible with provided Graph Interface and also to re-use the code written in CapGraph class.  
 GirvanNewman class has two inner classes to represent the vertex and edge in the graph. Method brandes() calculates the edge-betweenness in the graph using the Brande’s algorithm, based on which, the edges with highest betweenness are then removed. Method getModularity() calculates the modularity of the community structure found by removing the edges. 
 
 Method getCommunities() performs all the work in a single call, finds edge-betweenness, removes edges, calculates modularity for every community structure found until no more edges are left, records communities with top three modularity scores and returns them.

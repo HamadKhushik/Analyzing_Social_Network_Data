@@ -12,7 +12,7 @@
 
 Overview: 
 ==========
-This program detects sub-communities/lusters within a community using Girvan-Newman algorithm.    
+This program detects sub-communities/clusters within a community using Girvan-Newman algorithm.    
 Girvan-Newman Algorithm is implemented in two ways
 
 1. without using external libraries

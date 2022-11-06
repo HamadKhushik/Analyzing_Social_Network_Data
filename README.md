@@ -13,7 +13,11 @@
 Overview: 
 ==========
 
-This project analyzes data to find sub-communities/clusters within the data based on the connections in data. A detailed description of community structure can be found [Here] "(https://en.wikipedia.org/wiki/Community_structure)"
+This project analyzes data to find sub-communities/clusters within the data based on the connections in data. A detailed description of community structure can be found [on this wikipedia page](https://en.wikipedia.org/wiki/Community_structure)
+
+The picture below shows that there are two sub-communities within the data, pointed out by blue and purple colours. In picture 2 a more complex structure of sub-communities is shown.
+![Alt text](images/community finding 1.PNG?raw=true "Picture 1")
+![Alt text](images/community finding 2.PNG?raw=true "Picture 2")
 This program detects sub-communities/clusters within a community using Girvan-Newman algorithm.    
 Girvan-Newman Algorithm is implemented in two ways
 

@@ -17,11 +17,14 @@ This project analyzes data to find sub-communities/clusters within the data base
 
 The picture below shows that there are two sub-communities within the data, pointed out by blue and purple colours. In picture 2 a more complex structure of sub-communities is shown.
 ![Alt text](images/community%20finding%201.PNG?raw=true "Picture 1")
-![Alt text](images/community%20finding%202.PNG?raw=true "Picture 2")
+
+![](images/community%20finding%202.PNG?raw=true "Picture 2")
+
+
 This program detects sub-communities/clusters within a community using Girvan-Newman algorithm.    
 Girvan-Newman Algorithm is implemented in two ways
 
-1. without using external libraries
+1. without using external libraries(from scratch)
 2. using external library i-e JUNG library (GirvanNewmanJung class implements this)
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -58,6 +61,16 @@ O(m) { O(n2 *m) + O(m) + O(n*m) + O(n*m)} -> ignoring the smaller terms
   
 --------------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------------------
+Overall Design: 
+=================
+The design is simple and focused towards readability.  
+GirvanNewman class is used to implement the Girvan Newman Algorithm without any libraries  
+GirvanNewmanJung class implements the algorithm using the JUNG library.  
+GirvanNewman class has the major chunk of code. It extends the CapGraph class to make it compatible with provided Graph Interface and also to re-use the code written in CapGraph class.  
+GirvanNewman class has two inner classes to represent the vertex and edge in the graph. Method brandes() calculates the edge-betweenness in the graph using the Brande’s algorithm, based on which, the edges with highest betweenness are then removed. Method getModularity() calculates the modularity of the community structure found by removing the edges.   
+
+Method getCommunities() performs all the work in a single call, finds edge-betweenness, removes edges, calculates modularity for every community structure found until no more edges are left, records communities with top three modularity scores and returns them.
 
 --------------------------------------------------------------------------------------------------------------------------
 Class Design
@@ -86,13 +99,3 @@ Purpose and description of class: The only purpose of this class is to load the 
 -------------------------------------------------------------------------------------------------------------------------------
  
  
-----------------------------------------------------------------------------------------------------------------------------------
-Overall Design: 
-=================
-The design is simple and focused towards readability.  
-GirvanNewman class is used to implement the Girvan Newman Algorithm without any libraries(from scratch)   
-GirvanNewmanJung class implements the algorithm using the JUNG library.  
-GirvanNewman class has the major chunk of code. It extends the CapGraph class to make it compatible with provided Graph Interface and also to re-use the code written in CapGraph class.  
-GirvanNewman class has two inner classes to represent the vertex and edge in the graph. Method brandes() calculates the edge-betweenness in the graph using the Brande’s algorithm, based on which, the edges with highest betweenness are then removed. Method getModularity() calculates the modularity of the community structure found by removing the edges.   
-
-Method getCommunities() performs all the work in a single call, finds edge-betweenness, removes edges, calculates modularity for every community structure found until no more edges are left, records communities with top three modularity scores and returns them.

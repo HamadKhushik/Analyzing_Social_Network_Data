@@ -68,7 +68,7 @@ O(m) { O(n2 *m) + O(m) + O(n*m) + O(n*m)} -> ignoring the smaller terms
 
 ----------------------------------------------------------------------------------------------------------------------------------
 Overall Design: 
-=================
+----------------
 The design is simple and focused towards readability.  
 GirvanNewman class is used to implement the Girvan Newman Algorithm without any libraries.  
 GirvanNewmanJung class implements the algorithm using the JUNG library.  
@@ -79,7 +79,7 @@ Method getCommunities() performs all the work in a single call, finds edge-betwe
 
 --------------------------------------------------------------------------------------------------------------------------
 Class Design
-=============
+--------------
 
 GirvanNewman.java
 --------------------------

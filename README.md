@@ -44,7 +44,12 @@ However, the adjacency matrix is also implemented only to calculate Modularity M
 
 Algorithm: 
 -----------
-The primary algorithm used is Girvan-Newman Edge Betweenness Algorithm for community finding. To find the edge betweenness, Brande’s edge betweenness algorithm is used.   And Girvan-Newman method is used to find the modularity of the graph.
+- The primary algorithm used is Girvan-Newman Edge Betweenness Algorithm for community finding. 
+- Brande’s edge betweenness algorithm is used to find the edge betweenness.   
+- Girvan-Newman method is used to find the modularity of the graph.
+
+Modularity is a number representing how well the division of community is into sub-communities.
+
 
 
 Algorithm analysis: 

@@ -39,7 +39,7 @@ Girvan-Newman Algorithm is implemented in two ways.
 Data Structure: 
 ---------------
 The main Data Structure used is Graph using the adjacency list.   
-However, the adjacency matrix is also implemented (used only for modularity calculation). Modularity is calculated using the Modularity Matrix - which is evaluated using the Adjacency Matrix.
+However, the adjacency matrix is also implemented only to calculate Modularity Matrix used to calculate Modularity
 
 
 Algorithm: 

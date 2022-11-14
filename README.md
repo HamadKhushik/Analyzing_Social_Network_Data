@@ -33,6 +33,12 @@ Girvan-Newman Algorithm is implemented in two ways.
 2. using external library i-e JUNG library (GirvanNewmanJung class implements this)
 
 ----------------------------------------------------------------------------------------------------------------------
+Demo
+------
+(**Opens in Youtube**)
+
+
+[![](https://img.youtube.com/vi/VpVOqS6S2HY/hqdefault.jpg)](https://youtu.be/VpVOqS6S2HY)
 
 -------------------------------------------------------------------------------------------------------------------------
 
@@ -48,7 +54,7 @@ Algorithm:
 - Brande’s edge betweenness algorithm is used to find the edge betweenness.   
 - Girvan-Newman method is used to find the modularity of the graph.
 
-Modularity is a number representing how well the division of community is into sub-communities.
+**Modularity** is a number representing how well the division of community is into sub-communities.
 
 
 
